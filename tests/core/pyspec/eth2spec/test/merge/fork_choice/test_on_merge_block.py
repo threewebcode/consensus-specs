@@ -30,11 +30,11 @@ def with_pow_block_patch(spec, blocks, func):
     is_called = AtomicBoolean()
 
     def wrap(flag: AtomicBoolean):
-        func()
+        yield from func()
         flag.value = True
 
     try:
-        wrap(is_called)
+        yield from wrap(is_called)
     finally:
         spec.get_pow_block = get_pow_block_backup
     assert is_called.value
@@ -67,7 +67,7 @@ def test_all_valid(spec, state):
         # valid
         assert spec.get_head(store) == signed_block.message.hash_tree_root()
 
-    with_pow_block_patch(spec, pow_blocks, run_func)
+    yield from with_pow_block_patch(spec, pow_blocks, run_func)
     yield 'steps', test_steps
 
 
@@ -95,7 +95,7 @@ def test_block_lookup_failed(spec, state):
         # invalid
         assert spec.get_head(store) == anchor_block.state_root
 
-    with_pow_block_patch(spec, pow_blocks, run_func)
+    yield from with_pow_block_patch(spec, pow_blocks, run_func)
     yield 'steps', test_steps
 
 
@@ -126,7 +126,7 @@ def test_too_early_for_merge(spec, state):
         # invalid
         assert spec.get_head(store) == anchor_block.state_root
 
-    with_pow_block_patch(spec, pow_blocks, run_func)
+    yield from with_pow_block_patch(spec, pow_blocks, run_func)
     yield 'steps', test_steps
 
 
@@ -157,5 +157,5 @@ def test_too_late_for_merge(spec, state):
         # invalid
         assert spec.get_head(store) == anchor_block.state_root
 
-    with_pow_block_patch(spec, pow_blocks, run_func)
+    yield from with_pow_block_patch(spec, pow_blocks, run_func)
     yield 'steps', test_steps
