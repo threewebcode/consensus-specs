@@ -118,6 +118,9 @@ def get_state_and_beacon_parent_root_at_slot(spec, state, slot):
 
     previous_block_header = state.latest_block_header.copy()
     if previous_block_header.state_root == spec.Root():
-        previous_block_header.state_root = hash_tree_root(state)
+        # Genesis
+        genesis_block = spec.get_genesis_block_from_genesis_state(state)
+        previous_block_header.state_root = genesis_block.state_root
+        previous_block_header.body_root = hash_tree_root(genesis_block.body)
     beacon_parent_root = hash_tree_root(previous_block_header)
     return state, beacon_parent_root

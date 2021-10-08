@@ -11,7 +11,7 @@ from eth2spec.test.helpers.attestations import (
 def get_anchor_root(spec, state):
     anchor_block_header = state.latest_block_header.copy()
     if anchor_block_header.state_root == spec.Bytes32():
-        anchor_block_header.state_root = spec.hash_tree_root(state)
+        return spec.get_genesis_block_from_genesis_state(state).hash_tree_root()
     return spec.hash_tree_root(anchor_block_header)
 
 
@@ -98,7 +98,7 @@ def get_genesis_forkchoice_store(spec, genesis_state):
 
 def get_genesis_forkchoice_store_and_block(spec, genesis_state):
     assert genesis_state.slot == spec.GENESIS_SLOT
-    genesis_block = spec.BeaconBlock(state_root=genesis_state.hash_tree_root())
+    genesis_block = spec.get_genesis_block_from_genesis_state(genesis_state)
     return spec.get_forkchoice_store(genesis_state, genesis_block), genesis_block
 
 

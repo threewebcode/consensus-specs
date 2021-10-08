@@ -260,6 +260,26 @@ def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
 
 ## Beacon chain state transition function
 
+*Note*: The function `process_slot` is modified for pure Merge testing only.
+Modification include filling `state.latest_block_header.body_root` with the genesis block root.
+
+```python
+def process_slot(state: BeaconState) -> None:
+    # Cache state root
+    previous_state_root = hash_tree_root(state)
+    state.state_roots[state.slot % SLOTS_PER_HISTORICAL_ROOT] = previous_state_root
+    # Cache latest block header state root
+    if state.latest_block_header.state_root == Bytes32():
+        state.latest_block_header.state_root = previous_state_root 
+        if state.slot == GENESIS_SLOT:
+            # Note: it is only required for testing, where the genesis block has filled `execution_payload`.
+            genesis_block = get_genesis_block_from_genesis_state(state)
+            state.latest_block_header.body_root = hash_tree_root(genesis_block.body)
+    # Cache block root
+    previous_block_root = hash_tree_root(state.latest_block_header)
+    state.block_roots[state.slot % SLOTS_PER_HISTORICAL_ROOT] = previous_block_root
+```
+
 ### Execution engine
 
 The implementation-dependent `ExecutionEngine` protocol encapsulates the execution sub-system logic via:
