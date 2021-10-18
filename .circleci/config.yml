@@ -103,6 +103,66 @@ jobs:
           command: make citest
       - store_test_results:
           path: tests/core/pyspec/test-reports
+  testgen-sanity:
+    docker:
+      - image: circleci/python:3.8
+    working_directory: ~/specs-repo
+    steps:
+      - restore_cache:
+          key: v3-specs-repo-{{ .Branch }}-{{ .Revision }}
+      - restore_pyspec_cached_venv
+      - run:
+          name: Install libsnappy-dev
+          command: sudo apt install libsnappy-dev
+      - run:
+          name: Run test generator
+          command: make gen_sanity
+      - run:
+          name: Check if any errors
+          command: |
+            make detect_generator_incomplete
+            make detect_generator_error_log
+      - run:
+          name: Compress the test vectors
+          command: |
+            export CIRCLE_SHORT_SHA1=$(eval echo $CIRCLE_SHA1 | cut -c -7)
+            export TEST_VECTOR_DIR=../consensus-spec-tests/tests
+            export TARBALL_FILE_NAME=consensus-spec-tests-sanity-${CIRCLE_SHORT_SHA1};
+            tar -zcvf ${TARBALL_FILE_NAME}.tar.gz ${TEST_VECTOR_DIR};
+            mkdir /tmp/artifacts;
+            cp ${TARBALL_FILE_NAME}.tar.gz /tmp/artifacts;
+      - store_artifacts:
+          path: /tmp/artifacts
+  testgen:
+    docker:
+      - image: circleci/python:3.8
+    working_directory: ~/specs-repo
+    steps:
+      - restore_cache:
+          key: v3-specs-repo-{{ .Branch }}-{{ .Revision }}
+      - restore_pyspec_cached_venv
+      - run:
+          name: Install libsnappy-dev
+          command: sudo apt install libsnappy-dev
+      - run:
+          name: Run test generator
+          command: make generate_tests
+      - run:
+          name: Check if any errors
+          command: |
+            make detect_generator_incomplete
+            make detect_generator_error_log
+      - run:
+          name: Compress the test vectors
+          command: |
+            export CIRCLE_SHORT_SHA1=$(eval echo $CIRCLE_SHA1 | cut -c -7)
+            export TEST_VECTOR_DIR=../consensus-spec-tests/tests
+            export TARBALL_FILE_NAME=consensus-spec-tests-${CIRCLE_SHORT_SHA1};
+            tar -zcvf ${TARBALL_FILE_NAME}.tar.gz ${TEST_VECTOR_DIR};
+            mkdir /tmp/artifacts;
+            cp ${TARBALL_FILE_NAME}.tar.gz /tmp/artifacts;
+      - store_artifacts:
+          path: /tmp/artifacts
   table_of_contents:
     docker:
       - image: circleci/node:10.16.3
@@ -208,14 +268,21 @@ workflows:
       - install_pyspec_test:
           requires:
             - checkout_specs
-      - test:
+      # FIXME: comment out other jobs for now
+      # - test:
+      #     requires:
+      #       - install_pyspec_test
+      - testgen:
           requires:
             - install_pyspec_test
-      - table_of_contents
-      - codespell
-      - lint:
+      - testgen-sanity:
           requires:
-            - test
+            - install_pyspec_test
+      # - table_of_contents
+      # - codespell
+      # - lint:
+      #     requires:
+      #       - test
       # NOTE: Since phase 0 has been launched, we disabled the deposit contract tests. 
       # - install_deposit_contract_web3_tester:
       #     requires:
