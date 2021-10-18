@@ -215,7 +215,7 @@ workflows:
       - codespell
       - lint:
           requires:
-            - test
+            - install_pyspec_test
       # NOTE: Since phase 0 has been launched, we disabled the deposit contract tests. 
       # - install_deposit_contract_web3_tester:
       #     requires:
