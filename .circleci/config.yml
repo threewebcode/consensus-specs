@@ -106,6 +106,7 @@ jobs:
   testgen-sanity:
     docker:
       - image: circleci/python:3.8
+    resource_class: xlarge
     working_directory: ~/specs-repo
     steps:
       - restore_cache:
@@ -136,6 +137,7 @@ jobs:
   testgen:
     docker:
       - image: circleci/python:3.8
+    resource_class: xlarge
     working_directory: ~/specs-repo
     steps:
       - restore_cache:
